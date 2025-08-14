@@ -1,23 +1,37 @@
+import { db } from '../db';
+import { imageJobsTable } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { type GetImageJobInput, type ImageJob } from '../schema';
 
 export const getImageJob = async (input: GetImageJobInput): Promise<ImageJob> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to:
-    // 1. Fetch a specific image job by its ID from the database
-    // 2. Return the job details including current status and file URLs
-    // 3. Throw an error if the job is not found
-    
-    // Placeholder implementation
+  try {
+    // Fetch the image job by ID
+    const results = await db.select()
+      .from(imageJobsTable)
+      .where(eq(imageJobsTable.id, input.id))
+      .execute();
+
+    // Check if job exists
+    if (results.length === 0) {
+      throw new Error(`Image job with ID ${input.id} not found`);
+    }
+
+    // Return the job data
+    const job = results[0];
     return {
-        id: input.id,
-        original_filename: 'sample-image.jpg',
-        original_file_url: 'https://storage.example.com/original.jpg',
-        processed_file_url: 'https://storage.example.com/processed.png',
-        status: 'completed' as const,
-        error_message: null,
-        created_at: new Date(Date.now() - 300000), // 5 minutes ago
-        completed_at: new Date(Date.now() - 60000), // 1 minute ago
-        file_size_original: 1024000, // 1MB
-        file_size_processed: 512000 // 512KB
+      id: job.id,
+      original_filename: job.original_filename,
+      original_file_url: job.original_file_url,
+      processed_file_url: job.processed_file_url,
+      status: job.status,
+      error_message: job.error_message,
+      created_at: job.created_at,
+      completed_at: job.completed_at,
+      file_size_original: job.file_size_original,
+      file_size_processed: job.file_size_processed
     };
+  } catch (error) {
+    console.error('Failed to get image job:', error);
+    throw error;
+  }
 };

@@ -1,12 +1,21 @@
+import { db } from '../db';
+import { imageJobsTable } from '../db/schema';
 import { type ImageJob } from '../schema';
+import { desc } from 'drizzle-orm';
 
 export const getImageJobs = async (): Promise<ImageJob[]> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to:
-    // 1. Fetch all image processing jobs from the database
-    // 2. Return them ordered by creation date (newest first)
-    // 3. Can be extended to support pagination, filtering, and sorting
-    
-    // Placeholder implementation returning empty array
-    return [];
+  try {
+    // Query all image jobs ordered by creation date (newest first)
+    const results = await db.select()
+      .from(imageJobsTable)
+      .orderBy(desc(imageJobsTable.created_at))
+      .execute();
+
+    // Return the results as-is since all fields are already correctly typed
+    // No numeric conversions needed - all columns are text, integer, or timestamp
+    return results;
+  } catch (error) {
+    console.error('Failed to fetch image jobs:', error);
+    throw error;
+  }
 };
