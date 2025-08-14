@@ -5,30 +5,24 @@ import { type GetImageJobInput, type ImageJob } from '../schema';
 
 export const getImageJob = async (input: GetImageJobInput): Promise<ImageJob> => {
   try {
-    // Fetch the image job by ID
-    const results = await db.select()
+    const result = await db.select()
       .from(imageJobsTable)
       .where(eq(imageJobsTable.id, input.id))
       .execute();
 
-    // Check if job exists
-    if (results.length === 0) {
+    if (result.length === 0) {
       throw new Error(`Image job with ID ${input.id} not found`);
     }
 
-    // Return the job data
-    const job = results[0];
+    const imageJob = result[0];
     return {
-      id: job.id,
-      original_filename: job.original_filename,
-      original_file_url: job.original_file_url,
-      processed_file_url: job.processed_file_url,
-      status: job.status,
-      error_message: job.error_message,
-      created_at: job.created_at,
-      completed_at: job.completed_at,
-      file_size_original: job.file_size_original,
-      file_size_processed: job.file_size_processed
+      ...imageJob,
+      // Ensure proper type conversion for dates and nullable fields
+      created_at: imageJob.created_at,
+      completed_at: imageJob.completed_at,
+      processed_file_url: imageJob.processed_file_url,
+      error_message: imageJob.error_message,
+      file_size_processed: imageJob.file_size_processed,
     };
   } catch (error) {
     console.error('Failed to get image job:', error);

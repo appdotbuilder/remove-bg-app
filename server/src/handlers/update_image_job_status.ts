@@ -1,50 +1,54 @@
 import { db } from '../db';
 import { imageJobsTable } from '../db/schema';
-import { type UpdateImageJobStatusInput, type ImageJob } from '../schema';
 import { eq } from 'drizzle-orm';
+import { type UpdateImageJobStatusInput, type ImageJob } from '../schema';
 
 export const updateImageJobStatus = async (input: UpdateImageJobStatusInput): Promise<ImageJob> => {
   try {
-    // Build update values object
-    const updateValues: Partial<typeof imageJobsTable.$inferInsert> = {
+    // Build update object dynamically based on provided fields
+    const updateData: any = {
       status: input.status,
     };
 
-    // Set completed_at timestamp when status changes to 'completed' or 'failed'
-    if (['completed', 'failed'].includes(input.status)) {
-      updateValues.completed_at = new Date();
-    }
-
-    // Update processed_file_url when processing is successful
     if (input.processed_file_url) {
-      updateValues.processed_file_url = input.processed_file_url;
+      updateData.processed_file_url = input.processed_file_url;
     }
 
-    // Store error_message when processing fails
     if (input.error_message) {
-      updateValues.error_message = input.error_message;
+      updateData.error_message = input.error_message;
     }
 
-    // Store processed file size if provided
-    if (input.file_size_processed !== undefined) {
-      updateValues.file_size_processed = input.file_size_processed;
+    if (input.file_size_processed) {
+      updateData.file_size_processed = input.file_size_processed;
     }
 
-    // Update the job record
+    // Set completed_at timestamp if status is completed or failed
+    if (input.status === 'completed' || input.status === 'failed') {
+      updateData.completed_at = new Date();
+    }
+
     const result = await db.update(imageJobsTable)
-      .set(updateValues)
+      .set(updateData)
       .where(eq(imageJobsTable.id, input.id))
       .returning()
       .execute();
 
-    // Check if job exists
     if (result.length === 0) {
-      throw new Error(`Image job with id ${input.id} not found`);
+      throw new Error(`Image job with ID ${input.id} not found`);
     }
 
-    return result[0];
+    const imageJob = result[0];
+    return {
+      ...imageJob,
+      // Ensure proper type conversion for dates and nullable fields
+      created_at: imageJob.created_at,
+      completed_at: imageJob.completed_at,
+      processed_file_url: imageJob.processed_file_url,
+      error_message: imageJob.error_message,
+      file_size_processed: imageJob.file_size_processed,
+    };
   } catch (error) {
-    console.error('Image job status update failed:', error);
+    console.error('Failed to update image job status:', error);
     throw error;
   }
 };

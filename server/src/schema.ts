@@ -60,6 +60,11 @@ export const removeBackgroundInputSchema = z.object({
 
 export type RemoveBackgroundInput = z.infer<typeof removeBackgroundInputSchema>;
 
+// Response schema for background removal (returns the updated ImageJob)
+export const removeBackgroundResponseSchema = imageJobSchema;
+
+export type RemoveBackgroundResponse = z.infer<typeof removeBackgroundResponseSchema>;
+
 // Input schema for getting job by ID
 export const getImageJobInputSchema = z.object({
   id: z.number(),

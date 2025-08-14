@@ -1,21 +1,26 @@
 import { db } from '../db';
 import { imageJobsTable } from '../db/schema';
-import { type ImageJob } from '../schema';
 import { desc } from 'drizzle-orm';
+import { type ImageJob } from '../schema';
 
 export const getImageJobs = async (): Promise<ImageJob[]> => {
   try {
-    // Query all image jobs ordered by creation date (newest first)
     const results = await db.select()
       .from(imageJobsTable)
       .orderBy(desc(imageJobsTable.created_at))
       .execute();
 
-    // Return the results as-is since all fields are already correctly typed
-    // No numeric conversions needed - all columns are text, integer, or timestamp
-    return results;
+    return results.map(imageJob => ({
+      ...imageJob,
+      // Ensure proper type conversion for dates and nullable fields
+      created_at: imageJob.created_at,
+      completed_at: imageJob.completed_at,
+      processed_file_url: imageJob.processed_file_url,
+      error_message: imageJob.error_message,
+      file_size_processed: imageJob.file_size_processed,
+    }));
   } catch (error) {
-    console.error('Failed to fetch image jobs:', error);
+    console.error('Failed to get image jobs:', error);
     throw error;
   }
 };
